@@ -1,6 +1,6 @@
 """
 This is a simulator for HBase.
-Made by: Cayetano Molina 20211, Jose Monzon 20309, Mario de Leon TODO
+Made by: Cayetano Molina 20211, Jose Monzon 20309, Mario de Leon 19019
 """
 import os
 import json
