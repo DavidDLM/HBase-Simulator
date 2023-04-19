@@ -244,6 +244,18 @@ def count(table_name):
 
 
 def truncate(table_name):
+    disable(table_name)
+    if not (memes := i_get_table(table_name)):
+        return
+    dic, file_path = memes
+    dic["data"] = {}
+    with open(file_path, "w") as file:
+        json.dump(dic, file)
+    print(f"{table_name} has been truncated.")
+
+
+def retruncate(table_name):
+    disable(table_name)
     if not (memes := i_get_table(table_name)):
         return
     dic, file_path = memes
@@ -256,7 +268,6 @@ def truncate(table_name):
         temp_file_path = temp_file.name
     # Delete table json
     new_table_name = table_name
-    disable(table_name)
     os.remove(file_path)
     # Recreate table
     create(new_table_name, *dic["info"].keys())
@@ -267,29 +278,35 @@ def truncate(table_name):
         json.dump(temp_data, file)
     # Delete temp file
     os.remove(temp_file_path)
+    enable(new_table_name)
     print(f"{table_name} has been truncated.")
 
 
-# delete <table_name> <Geoffrey> <personal>
+# delete <table_name> <Robert> <personal:pet> <timestamp>
 def delete(table_name, *args):
     num_args = len(args)
-    if num_args != 2:
-        print("Invalid arguments. Usage: delete <table_name> <row_key> <column>")
+    if num_args != 3:
+        print("Invalid arguments. Usage: delete <table_name> <row_key> <column_family>:<column_qualifier> <timestamp>")
     else:
         if not (memes := i_get_table(table_name)):
             return
         dic, file_path = memes
         row_key = args[0]
-        column_cell = args[1:]
+        column_family, column_qualifier = args[1].split(":")
+        timestamp = args[2]
         if row_key not in dic["data"]:
             print("Row key not found")
             return
-        for cell in column_cell:
-            if cell not in dic["data"][row_key]:
-                print("Column cell not found")
-                return
-        for cell in column_cell:
-            del dic["data"][row_key][cell]
+        if column_family not in dic["data"][row_key]:
+            print("Column family not found")
+            return
+        if column_qualifier not in dic["data"][row_key][column_family]:
+            print("Column qualifier not found")
+            return
+        for idx, cell in enumerate(dic["data"][row_key][column_family][column_qualifier]):
+            if cell[1] == int(timestamp):
+                del dic["data"][row_key][column_family][column_qualifier][idx]
+                break
         with open(file_path, "w") as file:
             json.dump(dic, file)
             print("Deleted successfully")
@@ -332,7 +349,8 @@ command_dict = {
     "deleteall": deleteall,
     "scan": scan,
     "count": count,
-    "truncate": truncate
+    "truncate": truncate,
+    "retruncate": retruncate
 
     # Para agregar una funcion solamente se agrega el nombre de la funcion y el nombre del comando
 }
